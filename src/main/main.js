@@ -8,7 +8,7 @@ import { createWindow } from './window.js';
 import { registerIpc } from './ipc.js';
 import { formatCountdown, formatResetClock } from '../shared/countdown.js';
 
-const POLL_INTERVAL_MS = 180_000;
+const POLL_INTERVAL_MS = 120_000;
 const REFRESH_THROTTLE_MS = 10_000;
 
 if (!app.requestSingleInstanceLock()) {

@@ -81,7 +81,7 @@ function statusText(error, fetchedAt) {
     case 'format':
       return '일시적으로 불러올 수 없음';
     default:
-      return fetchedAt ? `${formatResetClock(fetchedAt)} 갱신 · 3분마다` : '';
+      return fetchedAt ? `${formatResetClock(fetchedAt)} 갱신 · 2분마다` : '';
   }
 }
 

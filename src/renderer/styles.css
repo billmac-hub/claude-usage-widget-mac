@@ -19,6 +19,7 @@ html, body {
   padding: 0;
   background: transparent;
   user-select: none;
+  overflow: hidden; /* 창 리사이즈 애니메이션 도중 내용이 잠깐 더 커도 스크롤바가 뜨지 않게 */
 }
 body {
   font-family: var(--sans);
