@@ -46,7 +46,7 @@ rmSync(STAGE, { recursive: true, force: true });
 mkdirSync(STAGE, { recursive: true });
 cpSync(join(ROOT, 'package.json'), join(STAGE, 'package.json'));
 cpSync(join(ROOT, 'src'), join(STAGE, 'src'), { recursive: true });
-cpSync(join(ROOT, 'assets'), join(STAGE, 'assets'), { recursive: true });
+cpSync(join(ROOT, 'assets'), join(STAGE, 'assets'), { recursive: true }); // 로고 + 메뉴바 아이콘(trayTemplate.png) 포함
 const ASAR = join(OUT, 'app.asar');
 run('npx', ['--yes', '@electron/asar', 'pack', STAGE, ASAR]);
 

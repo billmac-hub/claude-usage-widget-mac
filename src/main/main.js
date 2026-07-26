@@ -1,11 +1,12 @@
 // src/main/main.js
-import { app, Notification, Menu } from 'electron';
+import { app, Notification } from 'electron';
 import { join } from 'node:path';
 import { getToken, fetchUsage, normalize } from './usage.js';
 import { createAlertTracker } from './notifier.js';
 import { createSettingsStore } from './settings.js';
 import { createWindow } from './window.js';
 import { registerIpc } from './ipc.js';
+import { setupTray } from './tray.js';
 import { formatCountdown, formatResetClock } from '../shared/countdown.js';
 
 const POLL_INTERVAL_MS = 120_000;
@@ -68,25 +69,6 @@ function shortName(n) {
   return n.id === 'model' ? (parts[1] ?? n.label) : parts[0];
 }
 
-// 프레임 없는 창이라 타이틀바 메뉴가 없다 — 우클릭으로 자동 시작 토글 · 종료 제공.
-function showContextMenu(settingsStore) {
-  const openAtLogin = app.getLoginItemSettings().openAtLogin;
-  Menu.buildFromTemplate([
-    {
-      label: '로그인 시 자동 시작',
-      type: 'checkbox',
-      checked: openAtLogin,
-      click: () => {
-        const next = !openAtLogin;
-        app.setLoginItemSettings({ openAtLogin: next });
-        settingsStore.save({ openAtLogin: next });
-      },
-    },
-    { type: 'separator' },
-    { label: '종료', click: () => app.quit() },
-  ]).popup({ window: win });
-}
-
 app.whenReady().then(() => {
   const userData = app.getPath('userData');
   const settingsStore = createSettingsStore(join(userData, 'settings.json'));
@@ -98,7 +80,7 @@ app.whenReady().then(() => {
 
   win = createWindow(userData, settings);
   registerIpc({ win, settingsStore, requestRefresh: () => refresh(true) });
-  win.webContents.on('context-menu', () => showContextMenu(settingsStore));
+  setupTray({ app, win, settingsStore });
 
   refresh(true);
   setInterval(() => refresh(false), POLL_INTERVAL_MS);
