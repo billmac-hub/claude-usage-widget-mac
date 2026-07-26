@@ -1,0 +1,119 @@
+/* src/renderer/styles.css */
+:root {
+  --w-ground: #9c5d38;
+  --w-card: #4f3527;
+  --w-card-line: #74503a;
+  --w-text: #f8f1e9;
+  --w-muted: #c7b4a0;
+  --w-dim: #a08872;
+  --w-clay: #e2916b;
+  --w-calm: #86a9bd;
+  --w-caution: #e4a661;
+  --w-critical: #dd5d3e;
+  --sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', 'Helvetica Neue', sans-serif;
+}
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  user-select: none;
+}
+body {
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+.widget {
+  width: 280px;
+  background: var(--w-ground);
+  border-radius: 18px;
+  padding: 13px 13px 8px;
+  color: var(--w-text);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  font-size: 13px;
+  -webkit-app-region: drag;
+}
+
+.w-head { display: flex; align-items: center; gap: 8px; padding: 1px 3px 0; }
+.w-mark { width: 24px; height: 24px; flex: 0 0 auto; image-rendering: pixelated; }
+.w-title { font-size: 15.5px; font-weight: 700; letter-spacing: -0.01em; flex: 1; }
+
+.w-btn {
+  -webkit-app-region: no-drag;
+  width: 24px; height: 24px; border-radius: 7px;
+  border: 1px solid var(--w-card-line);
+  background: var(--w-card); color: var(--w-muted);
+  display: grid; place-items: center; cursor: pointer; flex: 0 0 auto;
+}
+.w-btn svg { width: 13px; height: 13px; }
+.w-btn:hover { color: var(--w-text); border-color: #8a6045; }
+.w-btn.pinned {
+  color: var(--w-clay);
+  border-color: rgba(255, 241, 230, 0.4);
+  background: rgba(255, 241, 230, 0.2);
+}
+.w-btn:focus-visible { outline: 2px solid var(--w-text); outline-offset: 1px; }
+
+.row {
+  background: var(--w-card); border: 1px solid var(--w-card-line);
+  border-radius: 12px; padding: 10px 12px 11px;
+  display: flex; flex-direction: column; gap: 7px;
+}
+.row-top { display: flex; align-items: baseline; gap: 8px; }
+.pct {
+  font-size: 27px; font-weight: 680; line-height: 1;
+  font-variant-numeric: tabular-nums; letter-spacing: -0.02em;
+}
+.pct small { font-size: 15px; font-weight: 600; margin-left: 1px; opacity: 0.75; }
+.tag {
+  margin-left: auto; font-size: 11px; color: var(--w-muted);
+  background: #2f2e2b; border-radius: 999px; padding: 3px 9px;
+  border: 1px solid #3a3834;
+}
+.bar { height: 7px; border-radius: 999px; background: #37342f; overflow: hidden; }
+.bar span { display: block; height: 100%; border-radius: 999px; }
+.fill-calm { background: var(--w-calm); }
+.fill-caution { background: var(--w-caution); }
+.fill-critical { background: var(--w-critical); }
+.fill-clay { background: var(--w-clay); }
+.reset { font-size: 11.5px; color: var(--w-muted); font-variant-numeric: tabular-nums; }
+.reset b { color: var(--w-text); font-weight: 650; }
+
+.minis { display: flex; gap: 6px; }
+.mini {
+  flex: 1; display: flex; flex-direction: column; gap: 5px;
+  background: var(--w-card); border: 1px solid var(--w-card-line);
+  border-radius: 10px; padding: 7px 9px 8px;
+}
+.mini .m-label { font-size: 10px; color: var(--w-muted); letter-spacing: 0.02em; }
+.mini .m-val { font-size: 14px; font-weight: 650; font-variant-numeric: tabular-nums; line-height: 1; }
+.mini .bar { height: 4px; }
+
+.w-expander {
+  -webkit-app-region: no-drag;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 4px 0 3px; color: var(--w-dim); font-size: 11px; cursor: pointer;
+  border-radius: 8px;
+}
+.w-expander:hover { color: var(--w-muted); background: rgba(255, 255, 255, 0.03); }
+.w-expander svg { width: 12px; height: 12px; }
+
+.w-foot {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11px; color: var(--w-dim); padding: 0 5px 3px;
+  font-variant-numeric: tabular-nums;
+}
+.dot { width: 5px; height: 5px; border-radius: 50%; background: #5e8c6a; flex: 0 0 auto; }
+.dot.warn { background: var(--w-critical); }
+
+#cards.stale .row,
+#cards.stale .mini { opacity: 0.6; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}

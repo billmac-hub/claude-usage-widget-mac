@@ -1,0 +1,27 @@
+<!-- src/renderer/index.html -->
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+    <title>사용량</title>
+  </head>
+  <body>
+    <div class="widget" id="widget">
+      <div class="w-head">
+        <img class="w-mark" src="../../assets/claude-fu.webp" alt="" />
+        <div class="w-title">사용량</div>
+        <div class="w-btn" id="pin-btn" role="button" tabindex="0" aria-label="항상 위"></div>
+        <div class="w-btn" id="refresh-btn" role="button" tabindex="0" aria-label="새로고침">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 4v5h-5"/></svg>
+        </div>
+      </div>
+      <div id="cards"></div>
+    </div>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
