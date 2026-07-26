@@ -18,6 +18,7 @@ if (!app.requestSingleInstanceLock()) {
 let win = null;
 let lastFetchAt = 0;
 let lastGoodMetrics = null; // 마지막 성공값 — 오류가 나도 화면에서 지우지 않기 위해 유지
+let lastGoodFetchedAt = null; // "HH:MM 기준" 표시에 쓰는, 그 성공값을 얻은 시각
 const alertTracker = createAlertTracker();
 
 async function loadUsage() {
@@ -41,12 +42,13 @@ async function refresh(force) {
     win?.webContents.send('usage:data', {
       error: result.error,
       metrics: lastGoodMetrics ?? [],
-      fetchedAt: null,
+      fetchedAt: lastGoodFetchedAt,
     });
     return;
   }
 
   lastGoodMetrics = result.metrics;
+  lastGoodFetchedAt = result.fetchedAt;
   win?.webContents.send('usage:data', { error: null, metrics: result.metrics, fetchedAt: result.fetchedAt });
 
   for (const n of alertTracker.check(result.metrics)) {
