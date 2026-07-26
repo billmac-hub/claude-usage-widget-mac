@@ -111,6 +111,8 @@ body {
 .dot { width: 5px; height: 5px; border-radius: 50%; background: #5e8c6a; flex: 0 0 auto; }
 .dot.warn { background: var(--w-critical); }
 
+#cards { display: flex; flex-direction: column; gap: 9px; }
+
 #cards.stale .row,
 #cards.stale .mini { opacity: 0.6; }
 
