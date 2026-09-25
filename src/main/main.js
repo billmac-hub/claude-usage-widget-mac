@@ -1,5 +1,5 @@
 // src/main/main.js
-import { app, Notification } from 'electron';
+import { app, dialog, Notification } from 'electron';
 import { join } from 'node:path';
 import { getToken, fetchUsage, normalize } from './usage.js';
 import { createAlertTracker } from './notifier.js';
@@ -69,12 +69,39 @@ function shortName(n) {
   return n.id === 'model' ? (parts[1] ?? n.label) : parts[0];
 }
 
+// scripts/package-mac.mjs는 서명 보존을 위해 순정 Electron 실행 파일 이름을 그대로 써서
+// app.isPackaged가 배포본에서도 항상 false다 — 앱 코드가 app.asar 안에 있는지로 판단한다.
+const isBundledApp = () => app.getAppPath().endsWith('.asar');
+
+// 다운로드 폴더 등 응용 프로그램 폴더 밖에서 실행하면 macOS가 앱을 임시 경로로 옮겨
+// 실행(App Translocation)해서 로그인 항목 등록이 깨진다. 배포본에서만 옮기기를 제안한다.
+function offerMoveToApplications() {
+  if (!isBundledApp() || app.isInApplicationsFolder()) return false;
+  const choice = dialog.showMessageBoxSync({
+    type: 'question',
+    message: '응용 프로그램 폴더로 옮길까요?',
+    detail: '옮겨야 로그인 시 자동 시작이 정상 동작해요.',
+    buttons: ['옮기기', '나중에'],
+    defaultId: 0,
+    cancelId: 1,
+  });
+  if (choice !== 0) return false;
+  try {
+    return app.moveToApplicationsFolder(); // 성공하면 옮긴 앱이 다시 실행되고 이 앱은 종료된다
+  } catch {
+    return false;
+  }
+}
+
 app.whenReady().then(() => {
   const userData = app.getPath('userData');
   const settingsStore = createSettingsStore(join(userData, 'settings.json'));
   const settings = settingsStore.load();
 
-  if (settings.openAtLogin) {
+  if (offerMoveToApplications()) return;
+
+  // 임시 경로가 로그인 항목에 등록되지 않도록, 설치 위치가 확정된 경우에만 등록한다
+  if (settings.openAtLogin && (!isBundledApp() || app.isInApplicationsFolder())) {
     app.setLoginItemSettings({ openAtLogin: true });
   }
 
