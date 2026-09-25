@@ -1,15 +1,20 @@
 {
   "name": "claude-usage-widget",
   "version": "0.1.0",
-  "description": "Claude Code 사용량 데스크톱 위젯",
+  "description": "Claude Code 사용량 데스크톱 위젯 (macOS)",
   "author": "billmac",
   "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/billmac-hub/claude-usage-widget-mac.git"
+  },
   "type": "module",
   "main": "src/main/main.js",
   "scripts": {
     "start": "electron .",
     "test": "node --test",
-    "dist:mac": "node scripts/package-mac.mjs"
+    "dist:mac": "node scripts/package-mac.mjs",
+    "release:assets": "bash scripts/make-release-assets.sh"
   },
   "devDependencies": {
     "@electron/asar": "^3.2.0",

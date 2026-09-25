@@ -1,0 +1,64 @@
+name: release
+on:
+  workflow_dispatch:   # 수동 실행: Release는 만들지 않고 결과물만 Actions에 올린다 (태그 전 테스트용)
+  push:
+    tags: ['v*']
+permissions:
+  contents: write      # Release 생성·첨부에 필요
+jobs:
+  build-mac:
+    runs-on: macos-15  # Apple Silicon(arm64). 재현성을 위해 latest 대신 고정
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: 태그와 package.json 버전 일치 확인
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: test "v$(jq -r .version package.json)" = "${GITHUB_REF_NAME}"
+      - run: npm ci
+      - run: npm test
+      - name: 앱 빌드 (electron-builder 없이 순정 Electron.app 복사)
+        run: node scripts/package-mac.mjs
+      - name: 배포 파일 생성 (zip · dmg · 체크섬)
+        run: npm run release:assets
+      - name: 스모크 테스트 — 설치 경로에 풀어 실행, 크래시 없이 떠 있는지 확인
+        run: |
+          set -euo pipefail
+          APP="/Applications/사용량.app"
+          EXE="${APP}/Contents/MacOS/Electron"
+          # 실행 중 프로세스 경로는 한글이 분해형(NFD)이라 두 형태로 모두 찾는다
+          EXE_NFD="$(printf '%s' "${EXE}" | iconv -f UTF-8 -t UTF-8-MAC)"
+          alive() { pgrep -f -- "${EXE}" >/dev/null || pgrep -f -- "${EXE_NFD}" >/dev/null; }
+          ditto -x -k dist/release/ClaudeUsageWidget-mac-arm64.zip /Applications
+          codesign --verify --deep --strict "${APP}"
+          open -n "${APP}"
+          sleep 10
+          if ! alive; then
+            echo "::error::실행 후 10초 안에 종료됐어요 (크래시 의심)"
+            ls -t ~/Library/Logs/DiagnosticReports 2>/dev/null | head -5 || true
+            exit 1
+          fi
+          pkill -f -- "${EXE}" || pkill -f -- "${EXE_NFD}" || true
+      - name: Release에 첨부 (태그 push일 때)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          body: |
+            ## 설치 (Apple Silicon 맥)
+            ```
+            curl -fsSL https://raw.githubusercontent.com/billmac-hub/claude-usage-widget-mac/main/install.sh | bash
+            ```
+            직접 받으려면 아래 `.dmg`를 받아 응용 프로그램으로 옮기세요. 자세한 안내는 README를 봐주세요.
+          files: |
+            dist/release/ClaudeUsageWidget-mac-arm64.zip
+            dist/release/ClaudeUsageWidget-mac-arm64.dmg
+            dist/release/SHA256SUMS.txt
+      - name: 결과물 업로드 (수동 실행일 때)
+        if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-assets
+          path: dist/release/*
