@@ -61,4 +61,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: release-assets
+          retention-days: 7
           path: dist/release/*
