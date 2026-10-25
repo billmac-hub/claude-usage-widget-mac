@@ -24,6 +24,8 @@ const RES = join(APP, 'Contents', 'Resources');
 
 const run = (cmd, args) => execFileSync(cmd, args, { stdio: 'inherit' });
 
+// Electron 42+ no longer downloads its binary in postinstall — fetch it explicitly.
+if (!existsSync(ELECTRON_APP)) run('npx', ['--no-install', 'install-electron']);
 if (!existsSync(ELECTRON_APP)) throw new Error('run `npm install` first (electron missing)');
 
 // 1. build/icon.png (1024) + .icns — sips/iconutil만 사용, 새 의존성 없음.

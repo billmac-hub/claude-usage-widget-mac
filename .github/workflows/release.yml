@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
       - name: 태그와 package.json 버전 일치 확인
         if: startsWith(github.ref, 'refs/tags/v')
