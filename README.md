@@ -2,6 +2,7 @@
 
 Claude Code 사용량(세션·주간·모델·크레딧)을 보여주는 **맥 전용** 데스크톱 위젯이에요.
 `/usage`와 같은 Anthropic 공식 엔드포인트를 그대로 읽어와요. (Apple Silicon M1 이상)
+macOS 13 이상 필요해요(Electron 45).
 
 ## 설치 (추천)
 

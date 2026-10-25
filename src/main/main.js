@@ -1,6 +1,8 @@
 // src/main/main.js
 import { app, dialog, Notification } from 'electron';
 import { join } from 'node:path';
+import { execFile } from 'node:child_process';
+import { createNotify } from './notify.js';
 import { getToken, fetchUsage, normalize } from './usage.js';
 import { createAlertTracker } from './notifier.js';
 import { createSettingsStore } from './settings.js';
@@ -57,11 +59,13 @@ async function refresh(force) {
   }
 }
 
+const notify = createNotify({ Notification, execFile });
+
 function notifyThreshold(n) {
   const remain = formatCountdown(n.resetsAt);
   const clock = formatResetClock(n.resetsAt);
   const body = remain && clock ? `${remain} 뒤 ${clock}에 리셋됩니다.` : '곧 리셋됩니다.';
-  new Notification({ title: `${shortName(n)} 한도 ${n.percent}%`, body }).show();
+  notify(`${shortName(n)} 한도 ${n.percent}%`, body);
 }
 
 function shortName(n) {
