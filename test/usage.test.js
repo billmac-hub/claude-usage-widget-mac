@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { normalize } from '../src/main/usage.js';
+import { normalize, getToken, claudeAccountName } from '../src/main/usage.js';
 
 const FETCHED_AT = '2026-07-26T13:52:00.000Z';
 
@@ -115,4 +115,59 @@ test('normalize: non-object / unexpected shapes are format errors', () => {
   assert.deepEqual(normalize('<html>error</html>', FETCHED_AT), { error: 'format' });
   assert.deepEqual(normalize({}, FETCHED_AT), { error: 'format' });
   assert.deepEqual(normalize({ limits: 'not-an-array' }, FETCHED_AT), { error: 'format' });
+});
+
+// 키체인 조회를 흉내 낸다: entries는 계정명 → 저장된 JSON. 계정 없이 조회하면 맨 앞 항목이 잡힌다(macOS 동작).
+function fakeKeychain(entries) {
+  const calls = [];
+  const exec = async (_cmd, args) => {
+    calls.push(args);
+    const i = args.indexOf('-a');
+    const account = i >= 0 ? args[i + 1] : Object.keys(entries)[0];
+    if (!(account in entries)) throw new Error('The specified item could not be found in the keychain.');
+    return { stdout: JSON.stringify(entries[account]) };
+  };
+  return { exec, calls };
+}
+
+const NOW = Date.parse('2026-10-28T03:00:00Z');
+const login = (expiresAt = NOW + 3_600_000) => ({ claudeAiOauth: { accessToken: 'tok-real', expiresAt } });
+
+test('getToken: reads the account entry even when a stray mcp-only entry comes first', async () => {
+  const { exec, calls } = fakeKeychain({ unknown: { mcpOAuth: {} }, billmac: login() });
+  const result = await getToken({ exec, account: 'billmac', now: NOW });
+  assert.deepEqual(result, { token: 'tok-real' });
+  assert.deepEqual(calls[0].slice(0, 3), ['find-generic-password', '-a', 'billmac']);
+});
+
+test('getToken: falls back to an account-less lookup when the account entry is missing', async () => {
+  const { exec } = fakeKeychain({ someone: login() });
+  assert.deepEqual(await getToken({ exec, account: 'billmac', now: NOW }), { token: 'tok-real' });
+});
+
+test('getToken: entries without claudeAiOauth are no_token', async () => {
+  const { exec } = fakeKeychain({ unknown: { mcpOAuth: {} } });
+  assert.deepEqual(await getToken({ exec, account: 'billmac', now: NOW }), { error: 'no_token' });
+});
+
+test('getToken: an expired access token is reported as expired, not as logged out', async () => {
+  const { exec } = fakeKeychain({ billmac: login(NOW - 1) });
+  assert.deepEqual(await getToken({ exec, account: 'billmac', now: NOW }), { error: 'expired' });
+});
+
+test('getToken: unparseable keychain data is no_token', async () => {
+  const exec = async () => ({ stdout: 'not json' });
+  assert.deepEqual(await getToken({ exec, account: 'billmac', now: NOW }), { error: 'no_token' });
+});
+
+test('claudeAccountName: follows $USER like Claude Code, rejecting unsafe names', () => {
+  const saved = process.env.USER;
+  try {
+    process.env.USER = 'billmac';
+    assert.equal(claudeAccountName(), 'billmac');
+    process.env.USER = 'bad name';
+    assert.equal(claudeAccountName(), 'claude-code-user');
+  } finally {
+    process.env.USER = saved;
+  }
 });

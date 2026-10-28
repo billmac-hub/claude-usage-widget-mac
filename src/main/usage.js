@@ -1,5 +1,6 @@
 // src/main/usage.js
 import { execFile } from 'node:child_process';
+import { userInfo } from 'node:os';
 import { promisify } from 'node:util';
 
 const execFileAsync = promisify(execFile);
@@ -7,30 +8,47 @@ const execFileAsync = promisify(execFile);
 const KEYCHAIN_SERVICE = 'Claude Code-credentials';
 const USAGE_URL = 'https://api.anthropic.com/api/oauth/usage';
 const USER_AGENT = 'claude-code/2.0.0';
+const ACCOUNT_PATTERN = /^[a-zA-Z0-9._-]+$/;
+
+// Claude Code가 키체인 항목에 쓰는 계정명과 같은 규칙: $USER, 없으면 OS 사용자명.
+export function claudeAccountName() {
+  let name;
+  try {
+    name = process.env.USER || userInfo().username;
+  } catch {
+    return 'claude-code-user';
+  }
+  return ACCOUNT_PATTERN.test(name) ? name : 'claude-code-user';
+}
 
 // macOS 키체인에서 Claude Code CLI의 OAuth 토큰을 읽는다.
 // 다른 앱이 이 항목을 처음 읽을 때 macOS가 접근 허용을 한 번 묻는 것은 정상 동작.
-export async function getToken() {
-  let stdout;
-  try {
-    ({ stdout } = await execFileAsync('security', [
-      'find-generic-password',
-      '-s',
-      KEYCHAIN_SERVICE,
-      '-w',
-    ]));
-  } catch {
-    return { error: 'no_token' };
-  }
+// USER 없이 실행된 claude는 같은 서비스 이름으로 'unknown' 계정 항목을 따로 만든다(2026-10-27 실측).
+// 계정을 빼고 조회하면 그 빈 항목이 먼저 잡히므로 계정을 지정해 읽고, 없을 때만 계정 없이 다시 읽는다.
+export async function getToken({ exec = execFileAsync, account = claudeAccountName(), now = Date.now() } = {}) {
+  for (const accountArgs of [['-a', account], []]) {
+    let stdout;
+    try {
+      ({ stdout } = await exec('security', ['find-generic-password', ...accountArgs, '-s', KEYCHAIN_SERVICE, '-w']));
+    } catch {
+      continue;
+    }
 
-  try {
-    const parsed = JSON.parse(stdout);
-    const token = parsed?.claudeAiOauth?.accessToken;
-    if (typeof token !== 'string' || !token) return { error: 'no_token' };
+    let oauth;
+    try {
+      oauth = JSON.parse(stdout)?.claudeAiOauth;
+    } catch {
+      continue;
+    }
+    const token = oauth?.accessToken;
+    if (typeof token !== 'string' || !token) continue;
+
+    // 위젯은 토큰을 갱신하지 않는다(갱신 토큰이 바뀌면 Claude Code 로그인이 풀릴 수 있음).
+    // 만료됐으면 Claude Code가 다음 실행 때 갱신할 때까지 기다린다.
+    if (Number.isFinite(oauth.expiresAt) && oauth.expiresAt <= now) return { error: 'expired' };
     return { token };
-  } catch {
-    return { error: 'no_token' };
   }
+  return { error: 'no_token' };
 }
 
 // /usage 화면과 같은 비공식 엔드포인트. 형식이 바뀔 수 있으므로 이 함수 밖에서

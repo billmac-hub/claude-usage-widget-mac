@@ -74,8 +74,11 @@ function miniCard(m) {
 function statusText(error, fetchedAt) {
   switch (error) {
     case 'no_token':
+      return 'Claude Code 로그인 정보를 찾지 못함';
+    case 'expired':
+      return 'Claude Code를 한 번 실행하면 갱신돼요';
     case 'auth':
-      return 'Claude Code에 로그인해 주세요';
+      return 'Claude Code에 다시 로그인해 주세요';
     case 'network':
       return fetchedAt ? `${formatResetClock(fetchedAt)} 기준` : '연결할 수 없음';
     case 'format':
