@@ -1,6 +1,6 @@
 {
   "name": "claude-usage-widget",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Claude Code 사용량 데스크톱 위젯 (macOS)",
   "author": "billmac",
   "private": true,
